@@ -6,17 +6,17 @@
  */
 
 import { injectable, inject } from "inversify";
-import { FrontendApplicationContribution, FrontendApplication } from "@theia/core/lib/browser";
 import { WidgetManager } from '@theia/core/lib/browser/widget-manager';
+import { LayoutInitializingContribution, FrontendApplication } from '@theia/core/lib/browser';
 
 @injectable()
-export class OutlineViewContribution implements FrontendApplicationContribution {
+export class OutlineViewContribution implements LayoutInitializingContribution {
 
     constructor(
         @inject(WidgetManager) protected readonly widgetManager: WidgetManager
     ) { }
 
-    onStart(app: FrontendApplication): void {
+    async initializeLayout(app: FrontendApplication): Promise<void> {
         this.widgetManager.getOrCreateWidget('outline-view').then(outline => {
             app.shell.addToRightArea(outline);
         });

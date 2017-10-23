@@ -26,7 +26,7 @@ import { CommonFrontendContribution } from './common-frontend-contribution';
 import { QuickOpenService, QuickCommandService, QuickCommandFrontendContribution } from './quick-open';
 import { LocalStorageService, StorageService } from './storage-service';
 import { WidgetFactory, WidgetManager } from './widget-manager';
-import { ShellLayoutRestorer } from './shell-layout-restorer';
+import { ShellLayoutRestorer, LayoutInitializingContribution } from './shell-layout-restorer';
 
 import '../../src/browser/style/index.css';
 import 'font-awesome/css/font-awesome.min.css';
@@ -41,6 +41,8 @@ export const frontendApplicationModule = new ContainerModule((bind, unbind, isBo
 
     bindContributionProvider(bind, WidgetFactory);
     bind(WidgetManager).toSelf().inSingletonScope();
+
+    bindContributionProvider(bind, LayoutInitializingContribution);
     bind(ShellLayoutRestorer).toSelf().inSingletonScope();
     bind(FrontendApplicationContribution).toDynamicValue(ctx => ctx.container.get(ShellLayoutRestorer));
     bind(CommandContribution).toDynamicValue(ctx => ctx.container.get(ShellLayoutRestorer));

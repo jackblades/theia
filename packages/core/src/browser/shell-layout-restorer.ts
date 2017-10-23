@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
-import { injectable, inject } from 'inversify';
+import { injectable, inject, named } from 'inversify';
 import { FrontendApplication, FrontendApplicationContribution } from './frontend-application';
 import { WidgetManager, WidgetConstructionOptions } from './widget-manager';
 import { StorageService } from './storage-service';
@@ -12,6 +12,7 @@ import { LayoutData } from './shell';
 import { Widget } from '@phosphor/widgets';
 import { ILogger } from '../common/logger';
 import { CommandContribution, CommandRegistry } from '../common/command';
+import { ContributionProvider } from '../common/contribution-provider';
 
 /**
  * A contract for widgets that want to store and restore their inner state, between sessions.
@@ -27,6 +28,18 @@ export interface StatefulWidget {
      * Called when the widget got created by the storage service
      */
     restoreState(oldState: object): void;
+}
+
+export const LayoutInitializingContribution = Symbol("LayoutInitializingContribution");
+
+/**
+ * Extension may use this hook to contribute to the default layout of the workbench
+ */
+export interface LayoutInitializingContribution {
+    /**
+     * called when there is no previous workbench layout state.
+     */
+    initializeLayout(app: FrontendApplication): Promise<void>;
 }
 
 export namespace StatefulWidget {
@@ -48,6 +61,8 @@ export class ShellLayoutRestorer implements FrontendApplicationContribution, Com
 
     constructor(
         @inject(WidgetManager) protected widgetManager: WidgetManager,
+        @inject(ContributionProvider) @named(LayoutInitializingContribution)
+        protected readonly contributions: ContributionProvider<LayoutInitializingContribution>,
         @inject(ILogger) protected logger: ILogger,
         @inject(StorageService) protected storageService: StorageService) { }
 
@@ -66,11 +81,14 @@ export class ShellLayoutRestorer implements FrontendApplicationContribution, Com
 
     onStart(app: FrontendApplication): void {
         this.storageService.getData<string>(this.storageKey).then(serializedLayoutData => {
-            let promise = Promise.resolve<void>(undefined);
             if (serializedLayoutData !== undefined) {
-                promise = this.inflate(serializedLayoutData).then(layoutData => {
+                this.inflate(serializedLayoutData).then(layoutData => {
                     app.shell.setLayoutData(layoutData);
                 });
+            } else {
+                for (const initializer of this.contributions.getContributions()) {
+                    initializer.initializeLayout(app);
+                }
             }
         });
     }

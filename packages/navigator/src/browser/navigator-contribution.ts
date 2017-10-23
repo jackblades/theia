@@ -7,7 +7,7 @@
 
 import { injectable, inject, named } from "inversify";
 import { SelectionService } from "@theia/core/lib/common";
-import { FrontendApplicationContribution, FrontendApplication } from "@theia/core/lib/browser";
+import { LayoutInitializingContribution, FrontendApplication } from '@theia/core/lib/browser';
 import { DirNode } from "@theia/filesystem/lib/browser";
 import { WorkspaceService } from "@theia/workspace/lib/browser";
 import { FileNavigatorWidget, FILE_NAVIGATOR_ID } from './navigator-widget';
@@ -16,7 +16,7 @@ import { WidgetFactory, WidgetManager } from '@theia/core/lib/browser/widget-man
 import { Widget } from '@phosphor/widgets';
 
 @injectable()
-export class FileNavigatorContribution implements FrontendApplicationContribution, WidgetFactory {
+export class FileNavigatorContribution implements LayoutInitializingContribution, WidgetFactory {
 
     id = 'navigator';
 
@@ -39,7 +39,7 @@ export class FileNavigatorContribution implements FrontendApplicationContributio
         });
     }
 
-    onStart(app: FrontendApplication): void {
+    async initializeLayout(app: FrontendApplication): Promise<void> {
         this.widgetManager.getOrCreateWidget('navigator').then(navigator =>
             app.shell.addToLeftArea(navigator)
         );
